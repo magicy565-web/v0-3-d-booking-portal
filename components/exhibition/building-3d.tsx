@@ -224,12 +224,112 @@ function ZoneBox({
   );
 }
 
+// Structural pillars between floors
+function StructuralPillars({ selectedFloor }: { selectedFloor: number | null }) {
+  const pillarPositions = [
+    [-2.1, 1.9], [-2.1, -1.6],  // Left side
+    [2.1, 1.9], [2.1, -1.6],    // Right side
+    [-2.1, 0], [2.1, 0],        // Middle sides
+  ];
+  
+  const pillarOpacity = selectedFloor ? 0.4 : 0.95;
+  const floorSpacing = 0.5;
+  const numFloors = 6;
+  
+  return (
+    <group>
+      {pillarPositions.map(([x, z], pillarIndex) => (
+        <group key={`pillar-column-${pillarIndex}`}>
+          {/* Full height structural column */}
+          <mesh position={[x, (numFloors * floorSpacing) / 2, z]}>
+            <cylinderGeometry args={[0.06, 0.08, numFloors * floorSpacing + 0.3, 8]} />
+            <meshStandardMaterial
+              color="#5a4a3a"
+              roughness={0.4}
+              metalness={0.3}
+              transparent
+              opacity={pillarOpacity}
+            />
+          </mesh>
+          {/* Decorative base */}
+          <mesh position={[x, -0.08, z]}>
+            <cylinderGeometry args={[0.1, 0.12, 0.16, 8]} />
+            <meshStandardMaterial
+              color="#8b7355"
+              roughness={0.5}
+              transparent
+              opacity={pillarOpacity}
+            />
+          </mesh>
+          {/* Decorative capital at top */}
+          <mesh position={[x, numFloors * floorSpacing + 0.05, z]}>
+            <cylinderGeometry args={[0.12, 0.08, 0.12, 8]} />
+            <meshStandardMaterial
+              color="#8b7355"
+              roughness={0.5}
+              transparent
+              opacity={pillarOpacity}
+            />
+          </mesh>
+        </group>
+      ))}
+      
+      {/* Horizontal beams between pillars at each floor */}
+      {Array.from({ length: numFloors }).map((_, floorIndex) => (
+        <group key={`beams-floor-${floorIndex}`}>
+          {/* Front beam */}
+          <mesh position={[0, floorIndex * floorSpacing, 1.9]}>
+            <boxGeometry args={[4.4, 0.04, 0.06]} />
+            <meshStandardMaterial
+              color="#6b5b4a"
+              roughness={0.5}
+              transparent
+              opacity={pillarOpacity * 0.8}
+            />
+          </mesh>
+          {/* Back beam */}
+          <mesh position={[0, floorIndex * floorSpacing, -1.6]}>
+            <boxGeometry args={[4.4, 0.04, 0.06]} />
+            <meshStandardMaterial
+              color="#6b5b4a"
+              roughness={0.5}
+              transparent
+              opacity={pillarOpacity * 0.8}
+            />
+          </mesh>
+          {/* Side beams */}
+          <mesh position={[-2.1, floorIndex * floorSpacing, 0.15]}>
+            <boxGeometry args={[0.06, 0.04, 3.6]} />
+            <meshStandardMaterial
+              color="#6b5b4a"
+              roughness={0.5}
+              transparent
+              opacity={pillarOpacity * 0.8}
+            />
+          </mesh>
+          <mesh position={[2.1, floorIndex * floorSpacing, 0.15]}>
+            <boxGeometry args={[0.06, 0.04, 3.6]} />
+            <meshStandardMaterial
+              color="#6b5b4a"
+              roughness={0.5}
+              transparent
+              opacity={pillarOpacity * 0.8}
+            />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
 function BuildingExterior({ selectedFloor }: { selectedFloor: number | null }) {
   const glassOpacity = selectedFloor ? 0.15 : 0.6;
-  const wallOpacity = selectedFloor ? 0.2 : 0.85;
 
   return (
     <group>
+      {/* Structural pillars */}
+      <StructuralPillars selectedFloor={selectedFloor} />
+      
       {/* Building base/foundation - stone look */}
       <mesh position={[0, -0.25, 0]}>
         <boxGeometry args={[5.2, 0.5, 4.2]} />

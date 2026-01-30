@@ -21,7 +21,7 @@ import {
   getStatusColor,
   getStatusLabelCn,
 } from "@/lib/floor-data";
-import { getZoneImage, GALLERY_STRUCTURE_IMAGE } from "@/lib/zone-images";
+import { getZoneImage, GALLERY_STRUCTURE_IMAGE, FLOOR_PREVIEW_IMAGES } from "@/lib/zone-images";
 import {
   CalendarIcon,
   MapPinIcon,
@@ -154,11 +154,29 @@ export function BookingPanel({
 
           {/* Selected Floor Info */}
           {selectedFloorData && (
-            <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-sm">
+            <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-sm overflow-hidden">
+              {/* Floor Preview Image */}
+              {FLOOR_PREVIEW_IMAGES[selectedFloorData.id] && (
+                <div className="relative aspect-[16/9] w-full">
+                  <Image
+                    src={FLOOR_PREVIEW_IMAGES[selectedFloorData.id] || "/placeholder.svg"}
+                    alt={selectedFloorData.name}
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <Badge className="bg-primary text-primary-foreground text-xs mb-1.5">
+                      {selectedFloorData.id}F
+                    </Badge>
+                    <h3 className="text-white font-bold text-sm">{selectedFloorData.name}</h3>
+                  </div>
+                </div>
+              )}
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                  {selectedFloorData.name}
+                  {selectedFloorData.coreFunction.split("、")[0]}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pb-4">
