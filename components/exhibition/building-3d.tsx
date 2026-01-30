@@ -1,10 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Canvas, useFrame, ThreeEvent } from "@react-three/fiber";
-import { OrbitControls, Environment, Html, Float } from "@react-three/drei";
+import { useRef, useState, Suspense } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { OrbitControls, Environment, Html, useTexture } from "@react-three/drei";
+import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { floorsData, type Floor, type Zone, getStatusColor } from "@/lib/floor-data";
+import { getFloorPlanImage } from "@/lib/zone-images";
 
 interface BuildingProps {
   selectedFloor: number | null;
@@ -13,7 +15,7 @@ interface BuildingProps {
   onZoneSelect: (zone: Zone | null, floor: Floor) => void;
 }
 
-function FloorPlate({
+function FloorPlateWithTexture({
   floor,
   yPosition,
   isSelected,
@@ -32,13 +34,21 @@ function FloorPlate({
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
+  
+  const textureUrl = getFloorPlanImage(floor.id);
+  const texture = useTexture(textureUrl || "/images/floor-plan-1f.png");
+  
+  // Configure texture
+  texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.rotation = Math.PI;
+  texture.center.set(0.5, 0.5);
 
-  const opacity = isAboveSelected ? 0.15 : isSelected ? 1 : 0.85;
-  const floorHeight = 0.08;
+  const opacity = isAboveSelected ? 0.1 : isSelected ? 1 : 0.7;
+  const floorHeight = 0.06;
 
   return (
     <group position={[0, yPosition, 0]}>
-      {/* Main floor plate */}
+      {/* Main floor plate with texture */}
       <mesh
         ref={meshRef}
         onClick={(e) => {
@@ -54,31 +64,45 @@ function FloorPlate({
           setHovered(false);
           document.body.style.cursor = "default";
         }}
+        rotation={[-Math.PI / 2, 0, 0]}
       >
-        <boxGeometry args={[4.5, floorHeight, 3.5]} />
+        <planeGeometry args={[4.5, 3.5]} />
         <meshStandardMaterial
-          color={hovered ? "#c9a86c" : "#e8dcc8"}
+          map={texture}
           transparent
           opacity={opacity}
-          roughness={0.3}
+          side={THREE.DoubleSide}
+          emissive={hovered ? "#fff5e6" : "#ffffff"}
+          emissiveIntensity={hovered ? 0.15 : 0.05}
+        />
+      </mesh>
+
+      {/* Floor base/thickness */}
+      <mesh position={[0, -floorHeight / 2, 0]}>
+        <boxGeometry args={[4.5, floorHeight, 3.5]} />
+        <meshStandardMaterial
+          color={hovered ? "#f5e6d0" : "#e8dcc8"}
+          transparent
+          opacity={opacity * 0.9}
+          roughness={0.4}
         />
       </mesh>
 
       {/* Floor label */}
       {!isAboveSelected && (
         <Html
-          position={[-2.5, 0.1, 0]}
+          position={[-2.5, 0.15, 0]}
           center
           distanceFactor={8}
           style={{ pointerEvents: "none" }}
         >
-          <div className="rounded bg-foreground/90 px-2 py-1 text-xs font-medium text-background whitespace-nowrap">
-            {floor.id}F
+          <div className="rounded-lg bg-foreground/90 px-3 py-1.5 text-xs font-semibold text-background whitespace-nowrap shadow-lg">
+            {floor.id}F - {floor.coreFunction.split("、")[0]}
           </div>
         </Html>
       )}
 
-      {/* Zones on this floor */}
+      {/* Zones on this floor - semi-transparent overlay */}
       {isSelected &&
         floor.zones.map((zone) => (
           <ZoneBox
@@ -89,12 +113,17 @@ function FloorPlate({
           />
         ))}
 
-      {/* Floor edges/walls simulation */}
-      <lineSegments>
+      {/* Floor edge highlight */}
+      <lineSegments position={[0, -floorHeight / 2, 0]}>
         <edgesGeometry
           args={[new THREE.BoxGeometry(4.5, floorHeight, 3.5)]}
         />
-        <lineBasicMaterial color="#8b7355" transparent opacity={opacity * 0.8} />
+        <lineBasicMaterial 
+          color={isSelected ? "#c9a86c" : "#8b7355"} 
+          transparent 
+          opacity={opacity * 0.6}
+          linewidth={2}
+        />
       </lineSegments>
     </group>
   );
@@ -115,15 +144,17 @@ function ZoneBox({
   useFrame((state) => {
     if (meshRef.current && isSelected) {
       meshRef.current.position.y =
-        zone.position[1] + Math.sin(state.clock.elapsedTime * 2) * 0.02 + 0.15;
+        zone.position[1] + Math.sin(state.clock.elapsedTime * 2) * 0.02 + 0.12;
     }
   });
 
   const statusColor = getStatusColor(zone.status);
   const displayColor = isSelected ? "#fbbf24" : hovered ? "#f59e0b" : zone.color;
+  const zoneOpacity = isSelected ? 0.6 : hovered ? 0.5 : 0.3;
 
   return (
-    <group position={[zone.position[0], zone.position[1] + 0.1, zone.position[2]]}>
+    <group position={[zone.position[0], zone.position[1] + 0.08, zone.position[2]]}>
+      {/* Zone volume - semi-transparent glass effect */}
       <mesh
         ref={meshRef}
         onClick={(e) => {
@@ -141,49 +172,52 @@ function ZoneBox({
         }}
         position={[0, 0.05, 0]}
       >
-        <boxGeometry args={[zone.size[0], zone.size[1], zone.size[2]]} />
-        <meshStandardMaterial
+        <boxGeometry args={[zone.size[0], zone.size[1] * 1.5, zone.size[2]]} />
+        <meshPhysicalMaterial
           color={displayColor}
           transparent
-          opacity={0.85}
-          roughness={0.4}
+          opacity={zoneOpacity}
+          roughness={0.1}
+          metalness={0.1}
+          transmission={0.3}
+          thickness={0.5}
         />
       </mesh>
 
-      {/* Status indicator */}
-      <mesh position={[zone.size[0] / 2 - 0.08, 0.15, zone.size[2] / 2 - 0.08]}>
-        <sphereGeometry args={[0.06, 16, 16]} />
+      {/* Status indicator - glowing sphere */}
+      <mesh position={[zone.size[0] / 2 - 0.08, 0.18, zone.size[2] / 2 - 0.08]}>
+        <sphereGeometry args={[0.05, 16, 16]} />
         <meshStandardMaterial
           color={statusColor}
           emissive={statusColor}
-          emissiveIntensity={0.5}
+          emissiveIntensity={1.2}
         />
       </mesh>
 
       {/* Zone label on hover or select */}
       {(hovered || isSelected) && (
         <Html
-          position={[0, 0.3, 0]}
+          position={[0, 0.35, 0]}
           center
-          distanceFactor={6}
+          distanceFactor={5}
           style={{ pointerEvents: "none" }}
         >
-          <div className="rounded-lg bg-card/95 px-3 py-2 text-xs shadow-lg border border-border backdrop-blur-sm whitespace-nowrap">
-            <div className="font-semibold text-card-foreground">{zone.name}</div>
-            <div className="text-muted-foreground">{zone.area} sqm</div>
+          <div className="rounded-xl bg-card/95 px-4 py-2.5 text-xs shadow-xl border border-border/50 backdrop-blur-md whitespace-nowrap">
+            <div className="font-bold text-card-foreground">{zone.name}</div>
+            <div className="text-muted-foreground mt-0.5">{zone.area} sqm | {zone.type}</div>
           </div>
         </Html>
       )}
 
-      {/* Edge lines */}
+      {/* Edge lines for zone boundary */}
       <lineSegments position={[0, 0.05, 0]}>
         <edgesGeometry
-          args={[new THREE.BoxGeometry(zone.size[0], zone.size[1], zone.size[2])]}
+          args={[new THREE.BoxGeometry(zone.size[0], zone.size[1] * 1.5, zone.size[2])]}
         />
         <lineBasicMaterial
-          color={isSelected ? "#fbbf24" : "#6b5b4a"}
+          color={isSelected ? "#fbbf24" : hovered ? "#f59e0b" : "#6b5b4a"}
           transparent
-          opacity={0.6}
+          opacity={isSelected ? 0.9 : hovered ? 0.7 : 0.4}
         />
       </lineSegments>
     </group>
@@ -191,110 +225,139 @@ function ZoneBox({
 }
 
 function BuildingExterior({ selectedFloor }: { selectedFloor: number | null }) {
-  const floorHeight = 0.5;
-  const baseHeight = 0.3;
+  const glassOpacity = selectedFloor ? 0.15 : 0.6;
+  const wallOpacity = selectedFloor ? 0.2 : 0.85;
 
   return (
     <group>
-      {/* Building base/foundation */}
-      <mesh position={[0, -0.2, 0]}>
-        <boxGeometry args={[5, 0.4, 4]} />
-        <meshStandardMaterial color="#9a8b7a" roughness={0.7} />
-      </mesh>
-
-      {/* Exterior walls - left side */}
-      <mesh position={[-2.35, 1.5, 0]}>
-        <boxGeometry args={[0.15, 3.2, 3.7]} />
-        <meshStandardMaterial
-          color="#d4c4b0"
-          transparent
-          opacity={selectedFloor ? 0.3 : 0.9}
-          roughness={0.4}
+      {/* Building base/foundation - stone look */}
+      <mesh position={[0, -0.25, 0]}>
+        <boxGeometry args={[5.2, 0.5, 4.2]} />
+        <meshStandardMaterial 
+          color="#a89880" 
+          roughness={0.8}
+          metalness={0.1}
         />
       </mesh>
 
-      {/* Exterior walls - right side */}
-      <mesh position={[2.35, 1.5, 0]}>
-        <boxGeometry args={[0.15, 3.2, 3.7]} />
-        <meshStandardMaterial
-          color="#d4c4b0"
+      {/* Glass exterior walls - left side */}
+      <mesh position={[-2.4, 1.5, 0]}>
+        <boxGeometry args={[0.1, 3.2, 3.9]} />
+        <meshPhysicalMaterial
+          color="#e8e4dc"
           transparent
-          opacity={selectedFloor ? 0.3 : 0.9}
-          roughness={0.4}
+          opacity={glassOpacity}
+          roughness={0.05}
+          metalness={0.1}
+          transmission={0.85}
+          thickness={0.5}
         />
       </mesh>
 
-      {/* Exterior walls - back */}
-      <mesh position={[0, 1.5, -1.85]}>
-        <boxGeometry args={[4.7, 3.2, 0.15]} />
-        <meshStandardMaterial
-          color="#d4c4b0"
+      {/* Glass exterior walls - right side */}
+      <mesh position={[2.4, 1.5, 0]}>
+        <boxGeometry args={[0.1, 3.2, 3.9]} />
+        <meshPhysicalMaterial
+          color="#e8e4dc"
           transparent
-          opacity={selectedFloor ? 0.3 : 0.9}
-          roughness={0.4}
+          opacity={glassOpacity}
+          roughness={0.05}
+          metalness={0.1}
+          transmission={0.85}
+          thickness={0.5}
         />
       </mesh>
 
-      {/* Front facade with arched windows (ground floor) */}
-      <mesh position={[0, 0.3, 1.85]}>
-        <boxGeometry args={[4.7, 0.6, 0.15]} />
-        <meshStandardMaterial
-          color="#d4c4b0"
+      {/* Glass exterior walls - back */}
+      <mesh position={[0, 1.5, -1.95]}>
+        <boxGeometry args={[4.9, 3.2, 0.1]} />
+        <meshPhysicalMaterial
+          color="#e8e4dc"
           transparent
-          opacity={selectedFloor ? 0.3 : 0.9}
-          roughness={0.4}
+          opacity={glassOpacity}
+          roughness={0.05}
+          metalness={0.1}
+          transmission={0.85}
+          thickness={0.5}
         />
       </mesh>
 
-      {/* Upper floors front */}
-      <mesh position={[0, 1.9, 1.85]}>
-        <boxGeometry args={[4.7, 2.6, 0.1]} />
-        <meshStandardMaterial
-          color="#d4c4b0"
-          transparent
-          opacity={selectedFloor ? 0.2 : 0.8}
-          roughness={0.4}
-        />
-      </mesh>
-
-      {/* Roof */}
-      <mesh position={[0, 3.2, 0]}>
-        <boxGeometry args={[4.8, 0.15, 3.9]} />
-        <meshStandardMaterial color="#8b7355" roughness={0.6} />
-      </mesh>
-
-      {/* Window frames - ground floor arches (decorative) */}
-      {[-1.5, -0.5, 0.5, 1.5].map((x, i) => (
-        <mesh key={`arch-${i}`} position={[x, 0.25, 1.92]}>
-          <boxGeometry args={[0.6, 0.5, 0.05]} />
+      {/* Stone columns - front facade ground floor */}
+      {[-2.0, -0.7, 0.7, 2.0].map((x, i) => (
+        <mesh key={`column-${i}`} position={[x, 0.3, 1.95]}>
+          <boxGeometry args={[0.2, 0.7, 0.15]} />
           <meshStandardMaterial
-            color="#fef3c7"
-            emissive="#fef3c7"
-            emissiveIntensity={0.3}
-            transparent
-            opacity={0.8}
+            color="#d4c4b0"
+            roughness={0.6}
           />
         </mesh>
       ))}
 
-      {/* Upper floor windows */}
+      {/* Front facade - glass with warm glow */}
+      <mesh position={[0, 1.9, 1.95]}>
+        <boxGeometry args={[4.9, 2.5, 0.08]} />
+        <meshPhysicalMaterial
+          color="#fff8e8"
+          transparent
+          opacity={glassOpacity}
+          roughness={0.05}
+          metalness={0.05}
+          transmission={0.9}
+          thickness={0.3}
+        />
+      </mesh>
+
+      {/* Ground floor arched windows - warm interior light */}
+      {[-1.4, -0.35, 0.7, 1.4].map((x, i) => (
+        <mesh key={`arch-${i}`} position={[x, 0.35, 1.97]}>
+          <boxGeometry args={[0.55, 0.55, 0.02]} />
+          <meshStandardMaterial
+            color="#fff5e0"
+            emissive="#fef3c7"
+            emissiveIntensity={0.8}
+            transparent
+            opacity={0.9}
+          />
+        </mesh>
+      ))}
+
+      {/* Upper floor windows grid - glowing */}
       {[1, 2, 3, 4, 5].map((floor) =>
-        [-1.8, -1.0, -0.2, 0.6, 1.4].map((x, i) => (
+        [-1.8, -0.9, 0, 0.9, 1.8].map((x, i) => (
           <mesh
             key={`window-${floor}-${i}`}
-            position={[x, 0.5 + floor * 0.5, 1.92]}
+            position={[x, 0.5 + floor * 0.5, 1.97]}
           >
-            <boxGeometry args={[0.4, 0.35, 0.02]} />
+            <boxGeometry args={[0.35, 0.3, 0.02]} />
             <meshStandardMaterial
-              color="#fef3c7"
+              color="#fff8e8"
               emissive="#fef3c7"
-              emissiveIntensity={0.2}
+              emissiveIntensity={0.5}
               transparent
-              opacity={0.7}
+              opacity={0.85}
             />
           </mesh>
         ))
       )}
+
+      {/* Roof with subtle detail */}
+      <mesh position={[0, 3.2, 0]}>
+        <boxGeometry args={[5.0, 0.12, 4.0]} />
+        <meshStandardMaterial 
+          color="#6b5b4a" 
+          roughness={0.5}
+          metalness={0.2}
+        />
+      </mesh>
+
+      {/* Roof edge trim */}
+      <mesh position={[0, 3.28, 0]}>
+        <boxGeometry args={[5.1, 0.04, 4.1]} />
+        <meshStandardMaterial 
+          color="#8b7355" 
+          roughness={0.4}
+        />
+      </mesh>
     </group>
   );
 }
@@ -309,27 +372,35 @@ function Scene({
 
   return (
     <>
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
-      <pointLight position={[-5, 5, 5]} intensity={0.5} color="#fef3c7" />
+      {/* Night scene lighting */}
+      <ambientLight intensity={0.25} color="#1a1a2e" />
+      <directionalLight position={[10, 15, 5]} intensity={0.4} color="#ffeedd" />
+      
+      {/* Warm interior point lights */}
+      <pointLight position={[0, 1, 0]} intensity={1.5} color="#fff5e0" distance={8} />
+      <pointLight position={[-1, 2, 0]} intensity={0.8} color="#fef3c7" distance={6} />
+      <pointLight position={[1, 2, 0]} intensity={0.8} color="#fef3c7" distance={6} />
+      <pointLight position={[0, 0.5, 1.5]} intensity={1.2} color="#fff8e8" distance={5} />
 
       <BuildingExterior selectedFloor={selectedFloor} />
 
-      {/* Floor plates */}
-      {floorsData.map((floor, index) => (
-        <FloorPlate
-          key={floor.id}
-          floor={floor}
-          yPosition={index * floorSpacing}
-          isSelected={selectedFloor === floor.id}
-          isAboveSelected={selectedFloor !== null && floor.id > selectedFloor}
-          onClick={() =>
-            onFloorSelect(selectedFloor === floor.id ? null : floor.id)
-          }
-          onZoneClick={(zone) => onZoneSelect(zone, floor)}
-          selectedZone={selectedZone}
-        />
-      ))}
+      {/* Floor plates with textures */}
+      <Suspense fallback={null}>
+        {floorsData.map((floor, index) => (
+          <FloorPlateWithTexture
+            key={floor.id}
+            floor={floor}
+            yPosition={index * floorSpacing}
+            isSelected={selectedFloor === floor.id}
+            isAboveSelected={selectedFloor !== null && floor.id > selectedFloor}
+            onClick={() =>
+              onFloorSelect(selectedFloor === floor.id ? null : floor.id)
+            }
+            onZoneClick={(zone) => onZoneSelect(zone, floor)}
+            selectedZone={selectedZone}
+          />
+        ))}
+      </Suspense>
 
       <OrbitControls
         enablePan={true}
@@ -341,7 +412,16 @@ function Scene({
         target={[0, 1.2, 0]}
       />
 
-      <Environment preset="city" />
+      <Environment preset="night" />
+
+      {/* Post-processing effects */}
+      <EffectComposer>
+        <Bloom 
+          luminanceThreshold={0.4}
+          luminanceSmoothing={0.9}
+          intensity={0.6}
+        />
+      </EffectComposer>
     </>
   );
 }
@@ -353,18 +433,20 @@ export function Building3D({
   onZoneSelect,
 }: BuildingProps) {
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
       <Canvas
         camera={{ position: [6, 4, 6], fov: 45 }}
         shadows
-        gl={{ antialias: true }}
+        gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
       >
-        <Scene
-          selectedFloor={selectedFloor}
-          selectedZone={selectedZone}
-          onFloorSelect={onFloorSelect}
-          onZoneSelect={onZoneSelect}
-        />
+        <Suspense fallback={null}>
+          <Scene
+            selectedFloor={selectedFloor}
+            selectedZone={selectedZone}
+            onFloorSelect={onFloorSelect}
+            onZoneSelect={onZoneSelect}
+          />
+        </Suspense>
       </Canvas>
     </div>
   );

@@ -55,14 +55,14 @@ export default function ExhibitionBookingPage() {
       {/* Header */}
       <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-4 py-3 md:px-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-            <span className="text-lg font-bold text-primary-foreground">EC</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg shadow-amber-500/20">
+            <span className="text-lg font-bold text-white">EC</span>
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-foreground md:text-base">
+            <h1 className="text-sm font-bold text-white md:text-base drop-shadow-lg">
               Global Exhibition Center
             </h1>
-            <p className="text-xs text-muted-foreground hidden md:block">
+            <p className="text-xs text-white/70 hidden md:block">
               Cross-border E-commerce Hub
             </p>
           </div>
@@ -94,31 +94,31 @@ export default function ExhibitionBookingPage() {
 
       {/* Info Panel */}
       {showInfo && (
-        <div className="absolute left-4 top-20 z-30 max-w-sm rounded-xl bg-card/95 p-4 shadow-lg backdrop-blur-sm border border-border md:left-6">
+        <div className="absolute left-4 top-20 z-30 max-w-sm rounded-xl bg-slate-900/95 p-4 shadow-xl backdrop-blur-md border border-white/10 md:left-6">
           <div className="flex items-start justify-between mb-3">
-            <h3 className="font-semibold text-card-foreground">How to Use</h3>
+            <h3 className="font-semibold text-white">How to Use</h3>
             <button
               onClick={() => setShowInfo(false)}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-white/60 hover:text-white"
             >
               <XIcon className="h-4 w-4" />
             </button>
           </div>
-          <ul className="space-y-2 text-sm text-muted-foreground">
+          <ul className="space-y-2 text-sm text-white/70">
             <li className="flex gap-2">
-              <span className="font-medium text-foreground">1.</span>
+              <span className="font-medium text-amber-400">1.</span>
               Click on a floor to isolate and view its zones
             </li>
             <li className="flex gap-2">
-              <span className="font-medium text-foreground">2.</span>
+              <span className="font-medium text-amber-400">2.</span>
               Click on a zone to see details and availability
             </li>
             <li className="flex gap-2">
-              <span className="font-medium text-foreground">3.</span>
+              <span className="font-medium text-amber-400">3.</span>
               Select dates and reserve your exhibition space
             </li>
             <li className="flex gap-2">
-              <span className="font-medium text-foreground">4.</span>
+              <span className="font-medium text-amber-400">4.</span>
               Drag to rotate, scroll to zoom the 3D view
             </li>
           </ul>
@@ -183,12 +183,12 @@ export default function ExhibitionBookingPage() {
 
       {/* Footer info */}
       <div className="absolute bottom-4 left-4 z-10 hidden md:block">
-        <div className="rounded-lg bg-card/80 px-3 py-2 text-xs text-muted-foreground backdrop-blur-sm border border-border">
-          <span className="font-medium text-card-foreground">6 Floors</span>
-          <span className="mx-2">|</span>
+        <div className="rounded-xl bg-slate-900/80 px-4 py-2.5 text-xs text-white/70 backdrop-blur-md border border-white/10 shadow-xl">
+          <span className="font-semibold text-white">6 Floors</span>
+          <span className="mx-2 text-white/30">|</span>
           <span>27 Exhibition Zones</span>
-          <span className="mx-2">|</span>
-          <span className="text-green-600">12 Available</span>
+          <span className="mx-2 text-white/30">|</span>
+          <span className="text-green-400 font-medium">12 Available</span>
         </div>
       </div>
     </main>
