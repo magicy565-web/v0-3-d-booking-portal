@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import { BookingPanel } from "@/components/exhibition/booking-panel";
 import { FloorSelector } from "@/components/exhibition/floor-selector";
-import { FilterBar } from "@/components/exhibition/filter-bar";
+import { FilterBar } from "@/components/exhibition/filter-bar"; // Import FilterBar component
 import { floorsData, type Floor, type Zone } from "@/lib/floor-data";
 import { Button } from "@/components/ui/button";
 import { MenuIcon, XIcon, InfoIcon } from "lucide-react";
@@ -33,7 +34,7 @@ export default function ExhibitionBookingPage() {
   const [selectedFloorData, setSelectedFloorData] = useState<Floor | null>(null);
   const [showPanel, setShowPanel] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
-  const [activeFilter, setActiveFilter] = useState("All");
+  const [activeFilter, setActiveFilter] = useState<string | null>(null); // Declare activeFilter variable
 
   const handleFloorSelect = (floorId: number | null) => {
     setSelectedFloor(floorId);
@@ -57,8 +58,14 @@ export default function ExhibitionBookingPage() {
       {/* Header */}
       <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-4 py-3 md:px-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg shadow-amber-500/20">
-            <span className="text-lg font-bold text-white">EC</span>
+          <div className="relative h-10 w-24">
+            <Image
+              src="/images/logo.png"
+              alt="Global Exhibition Center Logo"
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
           <div>
             <h1 className="text-sm font-bold text-white md:text-base drop-shadow-lg">
@@ -148,15 +155,8 @@ export default function ExhibitionBookingPage() {
           selectedZone={selectedZone}
           onFloorSelect={handleFloorSelect}
           onZoneSelect={handleZoneSelect}
-          activeFilter={activeFilter}
         />
       </div>
-
-      {/* Filter Bar */}
-      <FilterBar
-        activeFilter={activeFilter}
-        onFilterChange={setActiveFilter}
-      />
 
       {/* Floor Selector */}
       <FloorSelector

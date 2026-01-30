@@ -6,13 +6,13 @@ import { OrbitControls, Environment, Html, Stars, Sparkles } from "@react-three/
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { floorsData, type Floor, type Zone, getStatusColor } from "@/lib/floor-data";
+import { activeFilter, isGhostMode } from "@/lib/filter-data"; // Import activeFilter and isGhostMode
 
 interface BuildingProps {
   selectedFloor: number | null;
   selectedZone: Zone | null;
   onFloorSelect: (floorId: number | null) => void;
   onZoneSelect: (zone: Zone | null, floor: Floor) => void;
-  activeFilter: string;
 }
 
 // Floor colors by floor ID
@@ -33,7 +33,6 @@ function FloorPlate({
   onClick,
   onZoneClick,
   selectedZone,
-  activeFilter,
 }: {
   floor: Floor;
   yPosition: number;
@@ -42,7 +41,6 @@ function FloorPlate({
   onClick: () => void;
   onZoneClick: (zone: Zone) => void;
   selectedZone: Zone | null;
-  activeFilter: string;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
@@ -105,7 +103,6 @@ function FloorPlate({
             zone={zone}
             isSelected={selectedZone?.id === zone.id}
             onClick={() => onZoneClick(zone)}
-            activeFilter={activeFilter}
           />
         ))}
 
@@ -128,12 +125,10 @@ function ZoneBox({
   zone,
   isSelected,
   onClick,
-  activeFilter,
 }: {
   zone: Zone;
   isSelected: boolean;
   onClick: () => void;
-  activeFilter: string;
 }) {
   const [hovered, setHovered] = useState(false);
   const groupRef = useRef<THREE.Group>(null);
@@ -145,17 +140,13 @@ function ZoneBox({
     }
   });
 
-  // Filter logic - ghost mode for non-matching zones
-  const matchesFilter = activeFilter === "All" || zone.type === activeFilter;
-  const isGhostMode = !matchesFilter;
-
   const statusColor = getStatusColor(zone.status);
   const baseColor = zone.color;
   const glowColor = isSelected ? "#fbbf24" : hovered ? "#f59e0b" : baseColor;
   
-  // Adjust opacity based on filter
-  const baseOpacity = isGhostMode ? 0.08 : (isSelected ? 0.85 : hovered ? 0.7 : 0.5);
-  const edgeOpacity = isGhostMode ? 0.1 : (isSelected ? 1 : hovered ? 0.9 : 0.6);
+  // Standard opacity without filter
+  const baseOpacity = isSelected ? 0.85 : hovered ? 0.7 : 0.5;
+  const edgeOpacity = isSelected ? 1 : hovered ? 0.9 : 0.6;
 
   return (
     <group ref={groupRef} position={[zone.position[0], zone.position[1] + 0.05, zone.position[2]]}>
@@ -163,14 +154,12 @@ function ZoneBox({
       <mesh
         onClick={(e) => {
           e.stopPropagation();
-          if (!isGhostMode) onClick();
+          onClick();
         }}
         onPointerOver={(e) => {
           e.stopPropagation();
-          if (!isGhostMode) {
-            setHovered(true);
-            document.body.style.cursor = "pointer";
-          }
+          setHovered(true);
+          document.body.style.cursor = "pointer";
         }}
         onPointerOut={() => {
           setHovered(false);
@@ -185,26 +174,24 @@ function ZoneBox({
           opacity={baseOpacity}
           roughness={0.3}
           metalness={0.1}
-          emissive={isGhostMode ? "#000000" : glowColor}
+          emissive={glowColor}
           emissiveIntensity={isSelected ? 0.4 : hovered ? 0.25 : 0.1}
         />
       </mesh>
 
       {/* Status indicator - glowing sphere */}
-      {!isGhostMode && (
-        <mesh position={[zone.size[0] / 2 - 0.06, zone.size[1] * 2 + 0.1, zone.size[2] / 2 - 0.06]}>
-          <sphereGeometry args={[0.045, 16, 16]} />
-          <meshStandardMaterial
-            color={statusColor}
-            emissive={statusColor}
-            emissiveIntensity={3}
-            toneMapped={false}
-          />
-        </mesh>
-      )}
+      <mesh position={[zone.size[0] / 2 - 0.06, zone.size[1] * 2 + 0.1, zone.size[2] / 2 - 0.06]}>
+        <sphereGeometry args={[0.045, 16, 16]} />
+        <meshStandardMaterial
+          color={statusColor}
+          emissive={statusColor}
+          emissiveIntensity={3}
+          toneMapped={false}
+        />
+      </mesh>
 
       {/* Sleek tooltip on hover or select - black tag with white text */}
-      {(hovered || isSelected) && !isGhostMode && (
+      {(hovered || isSelected) && (
         <Html
           position={[0, zone.size[1] * 2.5 + 0.3, 0]}
           center
@@ -226,7 +213,7 @@ function ZoneBox({
           args={[new THREE.BoxGeometry(zone.size[0], zone.size[1] * 2.5, zone.size[2])]}
         />
         <lineBasicMaterial
-          color={isGhostMode ? "#444444" : (isSelected ? "#fbbf24" : hovered ? "#f59e0b" : "#8b7355")}
+          color={isSelected ? "#fbbf24" : hovered ? "#f59e0b" : "#8b7355"}
           transparent
           opacity={edgeOpacity}
         />
@@ -376,7 +363,6 @@ function Scene({
   selectedZone,
   onFloorSelect,
   onZoneSelect,
-  activeFilter,
 }: BuildingProps) {
   const floorSpacing = 0.5;
 
@@ -473,7 +459,6 @@ export function Building3D({
   selectedZone,
   onFloorSelect,
   onZoneSelect,
-  activeFilter = "All",
 }: BuildingProps) {
   return (
     <div className="h-full w-full">
@@ -493,7 +478,6 @@ export function Building3D({
             selectedZone={selectedZone}
             onFloorSelect={onFloorSelect}
             onZoneSelect={onZoneSelect}
-            activeFilter={activeFilter}
           />
         </Suspense>
       </Canvas>
