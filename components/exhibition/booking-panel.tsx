@@ -236,19 +236,10 @@ export function BookingPanel({
                           : "border-border/50 bg-background/50"
                       )}
                     >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="h-3 w-3 rounded-full ring-2 ring-white shadow-sm"
-                          style={{ backgroundColor: getStatusColor(zone.status) }}
-                        />
-                        <div>
-                          <p className="text-xs font-medium text-foreground">
-                            {zone.name}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {zone.area} sqm | {zone.type}
-                          </p>
-                        </div>
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-sm font-semibold">
+                          {zone.name}
+                        </span>
                       </div>
                       <Badge
                         variant={
@@ -456,59 +447,21 @@ export function BookingPanel({
             </>
           )}
 
-          {/* Sales Contact Section */}
+          {/* Appointment Section */}
           <Separator className="bg-border/50" />
           
           <Card className="bg-primary/5 border-primary/20 shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <MessageCircleIcon className="h-4 w-4 text-primary" />
-                专属销售顾问 (Sales Consultant)
+                预约咨询 (Book Appointment)
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 pb-4">
-              {/* Manager Info */}
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 shadow-md">
-                  <UserIcon className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">王经理</p>
-                  <p className="text-xs text-muted-foreground">Manager Wang | Senior Sales</p>
-                </div>
-              </div>
-
-              {/* WeChat ID */}
-              <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">WeChat:</span>
-                  <span className="font-mono font-semibold text-sm text-foreground">EX_VIP_2026</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyWechat}
-                  className="h-8 px-3 text-xs bg-transparent"
-                >
-                  {wechatCopied ? (
-                    <>
-                      <CheckCircleIcon className="h-3.5 w-3.5 mr-1.5 text-green-500" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <CopyIcon className="h-3.5 w-3.5 mr-1.5" />
-                      Copy
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              {/* Appointment Button */}
+            <CardContent className="pb-4">
               {appointmentBooked ? (
                 <div className="flex items-center justify-center gap-2 rounded-xl bg-green-500/10 p-3 text-green-600 border border-green-500/20">
                   <CheckCircleIcon className="h-4 w-4" />
-                  <span className="text-sm font-medium">Sales will contact you shortly!</span>
+                  <span className="text-sm font-medium">预约成功！销售将于24小时内联系您 | Appointment booked! We'll contact you within 24 hours.</span>
                 </div>
               ) : (
                 <Button
