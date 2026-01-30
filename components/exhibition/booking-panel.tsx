@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,9 +19,9 @@ import {
   type Zone,
   floorsData,
   getStatusColor,
-  getStatusLabel,
   getStatusLabelCn,
 } from "@/lib/floor-data";
+import { getZoneImage, GALLERY_STRUCTURE_IMAGE, FLOOR_PREVIEW_IMAGES } from "@/lib/zone-images";
 import {
   CalendarIcon,
   MapPinIcon,
@@ -31,6 +32,11 @@ import {
   XCircleIcon,
   ClockIcon,
   ChevronRightIcon,
+  ImageIcon,
+  MegaphoneIcon,
+  UserIcon,
+  CopyIcon,
+  MessageCircleIcon,
 } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -59,6 +65,19 @@ export function BookingPanel({
   });
   const [isBooking, setIsBooking] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [wechatCopied, setWechatCopied] = useState(false);
+  const [appointmentBooked, setAppointmentBooked] = useState(false);
+
+  const handleCopyWechat = async () => {
+    await navigator.clipboard.writeText("EX_VIP_2026");
+    setWechatCopied(true);
+    setTimeout(() => setWechatCopied(false), 2000);
+  };
+
+  const handleBookAppointment = () => {
+    setAppointmentBooked(true);
+    setTimeout(() => setAppointmentBooked(false), 3000);
+  };
 
   const handleBooking = async () => {
     if (!selectedZone || selectedZone.status !== "available") return;
@@ -81,24 +100,62 @@ export function BookingPanel({
       : 0;
 
   const totalPrice = selectedZone ? selectedZone.price * totalDays : 0;
+  
+  // Get zone image
+  const zoneImage = selectedZone ? getZoneImage(selectedZone.id) : undefined;
 
   return (
-    <div className="flex h-full flex-col bg-card">
-      {/* Header */}
-      <div className="border-b border-border p-4">
-        <h2 className="text-lg font-semibold text-card-foreground">
-          Exhibition Center
+    <div className="flex h-full flex-col bg-background/80 backdrop-blur-xl border-l border-border/50">
+      {/* Header with glassmorphism */}
+      <div className="border-b border-border/50 p-5 bg-gradient-to-r from-primary/5 to-transparent">
+        <h2 className="text-xl font-bold text-foreground tracking-tight">
+          Global Exhibition Center
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Select a floor and zone to book
+        <p className="text-sm text-muted-foreground mt-1">
+          Interactive 3D Space Booking
         </p>
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-4">
+        <div className="p-5 space-y-5">
+          {/* Launch Slogan Banner */}
+          <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/20">
+                <MegaphoneIcon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-amber-900 dark:text-amber-200 text-sm">
+                  项目于2026年6月正式开始招商
+                </p>
+                <p className="text-xs text-amber-700 dark:text-amber-400/80 mt-1">
+                  Project starts recruiting in June 2026
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Building Overview Image */}
+          {!selectedFloor && (
+            <div className="relative aspect-[16/9] rounded-xl overflow-hidden border border-border/50 shadow-lg">
+              <Image
+                src={GALLERY_STRUCTURE_IMAGE || "/placeholder.svg"}
+                alt="Exhibition Center Overview"
+                fill
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="absolute bottom-3 left-3 right-3">
+                <p className="text-white text-sm font-medium">6-Story Exhibition Complex</p>
+                <p className="text-white/70 text-xs">Click a floor to explore zones</p>
+              </div>
+            </div>
+          )}
+
           {/* Floor Selector */}
           <div>
-            <h3 className="text-sm font-medium text-card-foreground mb-3">
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <BuildingIcon className="h-4 w-4 text-primary" />
               Select Floor
             </h3>
             <div className="grid grid-cols-3 gap-2">
@@ -109,16 +166,17 @@ export function BookingPanel({
                     onFloorSelect(selectedFloor === floor.id ? null : floor.id)
                   }
                   className={cn(
-                    "flex flex-col items-center justify-center rounded-lg border p-3 transition-all hover:border-primary/50",
+                    "flex flex-col items-center justify-center rounded-xl border p-3 transition-all duration-200",
+                    "hover:border-primary/50 hover:bg-primary/5 hover:shadow-md",
                     selectedFloor === floor.id
-                      ? "border-primary bg-primary/10"
-                      : "border-border bg-background"
+                      ? "border-primary bg-primary/10 shadow-md ring-1 ring-primary/20"
+                      : "border-border/50 bg-card/50 backdrop-blur-sm"
                   )}
                 >
-                  <span className="text-lg font-semibold text-card-foreground">
+                  <span className="text-xl font-bold text-foreground">
                     {floor.id}F
                   </span>
-                  <span className="text-[10px] text-muted-foreground text-center leading-tight mt-1">
+                  <span className="text-[10px] text-muted-foreground text-center leading-tight mt-1 line-clamp-1">
                     {floor.coreFunction.split("、")[0]}
                   </span>
                 </button>
@@ -126,66 +184,75 @@ export function BookingPanel({
             </div>
           </div>
 
-          <Separator />
+          <Separator className="bg-border/50" />
 
           {/* Selected Floor Info */}
           {selectedFloorData && (
-            <Card className="bg-secondary/30">
-              <CardHeader className="pb-2">
+            <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-sm overflow-hidden">
+              {/* Floor Preview Image */}
+              {FLOOR_PREVIEW_IMAGES[selectedFloorData.id] && (
+                <div className="relative aspect-[16/9] w-full">
+                  <Image
+                    src={FLOOR_PREVIEW_IMAGES[selectedFloorData.id] || "/placeholder.svg"}
+                    alt={selectedFloorData.name}
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <Badge className="bg-primary text-primary-foreground text-xs mb-1.5">
+                      {selectedFloorData.id}F
+                    </Badge>
+                    <h3 className="text-white font-bold text-sm">{selectedFloorData.name}</h3>
+                  </div>
+                </div>
+              )}
+              <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <BuildingIcon className="h-4 w-4" />
-                  {selectedFloorData.name}
+                  <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                  {selectedFloorData.coreFunction.split("、")[0]}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pb-3">
-                <p className="text-xs text-muted-foreground mb-3">
+              <CardContent className="pb-4">
+                <p className="text-xs text-muted-foreground mb-4">
                   {selectedFloorData.coreFunction}
                 </p>
 
                 {/* Zones list */}
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-card-foreground">
-                    Available Zones ({selectedFloorData.zones.length})
+                  <p className="text-xs font-semibold text-foreground flex items-center gap-2">
+                    <MapPinIcon className="h-3.5 w-3.5" />
+                    Zones ({selectedFloorData.zones.length})
                   </p>
                   {selectedFloorData.zones.map((zone) => (
                     <button
                       key={zone.id}
                       onClick={() => onZoneSelect(zone, selectedFloorData)}
                       className={cn(
-                        "w-full flex items-center justify-between rounded-md border p-2 text-left transition-all hover:border-primary/50",
+                        "w-full flex items-center justify-between rounded-lg border p-3 text-left transition-all duration-200",
+                        "hover:border-primary/50 hover:bg-primary/5 hover:shadow-sm",
                         selectedZone?.id === zone.id
-                          ? "border-primary bg-primary/10"
-                          : "border-border bg-background"
+                          ? "border-primary bg-primary/10 shadow-sm ring-1 ring-primary/20"
+                          : "border-border/50 bg-background/50"
                       )}
                     >
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="h-3 w-3 rounded-full"
-                          style={{ backgroundColor: getStatusColor(zone.status) }}
-                        />
-                        <div>
-                          <p className="text-xs font-medium text-card-foreground">
-                            {zone.name}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {zone.area} sqm
-                          </p>
-                        </div>
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-sm font-semibold">
+                          {zone.name}
+                        </span>
                       </div>
-                      <div className="text-right">
-                        <Badge
-                          variant={
-                            zone.status === "available"
-                              ? "default"
-                              : zone.status === "pending"
-                              ? "secondary"
-                              : "destructive"
-                          }
-                          className="text-[10px]"
-                        >
-                          {getStatusLabelCn(zone.status)}
-                        </Badge>
-                      </div>
+                      <Badge
+                        variant={
+                          zone.status === "available"
+                            ? "default"
+                            : zone.status === "pending"
+                            ? "secondary"
+                            : "destructive"
+                        }
+                        className="text-[10px] font-medium"
+                      >
+                        {getStatusLabelCn(zone.status)}
+                      </Badge>
                     </button>
                   ))}
                 </div>
@@ -196,18 +263,43 @@ export function BookingPanel({
           {/* Selected Zone Details */}
           {selectedZone && (
             <>
-              <Separator />
+              <Separator className="bg-border/50" />
 
-              <Card>
-                <CardHeader className="pb-2">
+              <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-sm overflow-hidden">
+                {/* Zone Image */}
+                {zoneImage ? (
+                  <div className="relative aspect-video w-full">
+                    <Image
+                      src={zoneImage || "/placeholder.svg"}
+                      alt={selectedZone.name}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <Badge className="bg-white/90 text-foreground text-xs">
+                        {selectedZone.type}
+                      </Badge>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="aspect-video w-full bg-muted/50 flex items-center justify-center">
+                    <div className="text-center text-muted-foreground">
+                      <ImageIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-xs">Preview not available</p>
+                    </div>
+                  </div>
+                )}
+
+                <CardHeader className="pb-2 pt-4">
                   <CardTitle className="text-sm flex items-center gap-2">
-                    <MapPinIcon className="h-4 w-4" />
+                    <MapPinIcon className="h-4 w-4 text-primary" />
                     Zone Details
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 pb-3">
+                <CardContent className="space-y-4 pb-4">
                   <div>
-                    <h4 className="font-semibold text-card-foreground">
+                    <h4 className="font-bold text-foreground text-base">
                       {selectedZone.name}
                     </h4>
                     <p className="text-xs text-muted-foreground">
@@ -215,27 +307,27 @@ export function BookingPanel({
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-2">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/30">
                       <SquareIcon className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Area</p>
-                        <p className="text-sm font-medium">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Area</p>
+                        <p className="text-sm font-semibold">
                           {selectedZone.area} sqm
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/30">
                       <TagIcon className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Type</p>
-                        <p className="text-sm font-medium">{selectedZone.type}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Type</p>
+                        <p className="text-sm font-semibold">{selectedZone.type}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-md bg-secondary/50 p-2">
-                    <span className="text-xs text-muted-foreground">Status</span>
+                  <div className="flex items-center justify-between rounded-lg bg-muted/30 p-3">
+                    <span className="text-xs text-muted-foreground font-medium">Status</span>
                     <div className="flex items-center gap-2">
                       {selectedZone.status === "available" && (
                         <CheckCircleIcon className="h-4 w-4 text-green-500" />
@@ -247,7 +339,7 @@ export function BookingPanel({
                         <ClockIcon className="h-4 w-4 text-amber-500" />
                       )}
                       <span
-                        className="text-sm font-medium"
+                        className="text-sm font-bold"
                         style={{ color: getStatusColor(selectedZone.status) }}
                       >
                         {getStatusLabelCn(selectedZone.status)}
@@ -255,17 +347,17 @@ export function BookingPanel({
                     </div>
                   </div>
 
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     {selectedZone.description}
                   </p>
 
                   {selectedZone.price > 0 && (
-                    <div className="rounded-md bg-primary/10 p-3">
+                    <div className="rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 p-4 border border-primary/20">
                       <div className="flex items-baseline justify-between">
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground font-medium">
                           Daily Rate
                         </span>
-                        <span className="text-lg font-bold text-primary">
+                        <span className="text-2xl font-bold text-primary">
                           ¥{selectedZone.price.toLocaleString()}
                         </span>
                       </div>
@@ -277,26 +369,26 @@ export function BookingPanel({
               {/* Date Selection */}
               {selectedZone.status === "available" && selectedZone.price > 0 && (
                 <>
-                  <Separator />
+                  <Separator className="bg-border/50" />
 
-                  <Card>
+                  <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-sm">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm flex items-center gap-2">
-                        <CalendarIcon className="h-4 w-4" />
+                        <CalendarIcon className="h-4 w-4 text-primary" />
                         Select Dates
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="pb-3">
+                    <CardContent className="pb-4">
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
-                            className="w-full justify-start text-left font-normal bg-transparent"
+                            className="w-full justify-start text-left font-normal bg-transparent hover:bg-muted/50"
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                             {dateRange.from ? (
                               dateRange.to ? (
-                                <>
+                                <span className="font-medium">
                                   {format(dateRange.from, "MM/dd", {
                                     locale: zhCN,
                                   })}{" "}
@@ -304,12 +396,12 @@ export function BookingPanel({
                                   {format(dateRange.to, "MM/dd", {
                                     locale: zhCN,
                                   })}
-                                </>
+                                </span>
                               ) : (
                                 format(dateRange.from, "PPP", { locale: zhCN })
                               )
                             ) : (
-                              <span>Pick dates</span>
+                              <span className="text-muted-foreground">Pick dates</span>
                             )}
                           </Button>
                         </PopoverTrigger>
@@ -330,23 +422,19 @@ export function BookingPanel({
                       </Popover>
 
                       {totalDays > 0 && (
-                        <div className="mt-3 space-y-2">
+                        <div className="mt-4 space-y-2 p-3 rounded-lg bg-muted/30">
                           <div className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">
-                              Duration
-                            </span>
-                            <span>{totalDays} days</span>
+                            <span className="text-muted-foreground">Duration</span>
+                            <span className="font-medium">{totalDays} days</span>
                           </div>
                           <div className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">
-                              Daily Rate
-                            </span>
-                            <span>¥{selectedZone.price.toLocaleString()}</span>
+                            <span className="text-muted-foreground">Daily Rate</span>
+                            <span className="font-medium">¥{selectedZone.price.toLocaleString()}</span>
                           </div>
-                          <Separator />
-                          <div className="flex justify-between">
-                            <span className="font-medium">Total</span>
-                            <span className="text-lg font-bold text-primary">
+                          <Separator className="my-2 bg-border/50" />
+                          <div className="flex justify-between items-baseline">
+                            <span className="font-semibold text-sm">Total</span>
+                            <span className="text-xl font-bold text-primary">
                               ¥{totalPrice.toLocaleString()}
                             </span>
                           </div>
@@ -358,33 +446,61 @@ export function BookingPanel({
               )}
             </>
           )}
+
+          {/* Appointment Section */}
+          <Separator className="bg-border/50" />
+          
+          <Card className="bg-primary/5 border-primary/20 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <MessageCircleIcon className="h-4 w-4 text-primary" />
+                预约咨询 (Book Appointment)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pb-4">
+              {appointmentBooked ? (
+                <div className="flex items-center justify-center gap-2 rounded-xl bg-green-500/10 p-3 text-green-600 border border-green-500/20">
+                  <CheckCircleIcon className="h-4 w-4" />
+                  <span className="text-sm font-medium">预约成功！销售将于24小时内联系您 | Appointment booked! We'll contact you within 24 hours.</span>
+                </div>
+              ) : (
+                <Button
+                  className="w-full rounded-xl"
+                  onClick={handleBookAppointment}
+                >
+                  <MessageCircleIcon className="h-4 w-4 mr-2" />
+                  预约咨询 (Book Appointment)
+                </Button>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </ScrollArea>
 
       {/* Booking Action */}
       {selectedZone && selectedZone.status === "available" && selectedZone.price > 0 && (
-        <div className="border-t border-border p-4">
+        <div className="border-t border-border/50 p-5 bg-gradient-to-t from-background to-transparent">
           {bookingSuccess ? (
-            <div className="flex items-center justify-center gap-2 rounded-lg bg-green-500/10 p-3 text-green-600">
+            <div className="flex items-center justify-center gap-2 rounded-xl bg-green-500/10 p-4 text-green-600 border border-green-500/20">
               <CheckCircleIcon className="h-5 w-5" />
-              <span className="font-medium">Booking Submitted!</span>
+              <span className="font-semibold">Booking Submitted Successfully!</span>
             </div>
           ) : (
             <Button
-              className="w-full"
+              className="w-full h-12 text-base font-semibold rounded-xl shadow-lg shadow-primary/20"
               size="lg"
               onClick={handleBooking}
               disabled={isBooking || !dateRange.from || !dateRange.to}
             >
               {isBooking ? (
                 <>
-                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  <span className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
                   Processing...
                 </>
               ) : (
                 <>
                   Reserve Zone
-                  <ChevronRightIcon className="ml-2 h-4 w-4" />
+                  <ChevronRightIcon className="ml-2 h-5 w-5" />
                 </>
               )}
             </Button>
@@ -394,8 +510,8 @@ export function BookingPanel({
 
       {/* Non-bookable notice */}
       {selectedZone && (selectedZone.status !== "available" || selectedZone.price === 0) && (
-        <div className="border-t border-border p-4">
-          <div className="rounded-lg bg-muted p-3 text-center text-sm text-muted-foreground">
+        <div className="border-t border-border/50 p-5">
+          <div className="rounded-xl bg-muted/50 p-4 text-center text-sm text-muted-foreground border border-border/50">
             {selectedZone.status === "booked"
               ? "This zone is currently booked"
               : selectedZone.status === "pending"

@@ -12,6 +12,7 @@ export interface Zone {
   size: [number, number, number];
   color: string;
   description: string;
+  image?: string;
 }
 
 export interface Floor {
@@ -44,7 +45,8 @@ export const floorsData: Floor[] = [
         position: [-1.2, 0, -0.5],
         size: [1.8, 0.15, 1.6],
         color: "#F5E6A3",
-        description: "沉浸式零售体验区，适合产品展示与现场销售"
+        description: "沉浸式零售体验区，适合产品展示与现场销售",
+        image: "/images/1-e6-a5-bc-e7-bb-bc-e5-90-88-e8-b4-a7-e6-9e-b6.jpg"
       },
       {
         id: "1f-industry",
@@ -57,7 +59,8 @@ export const floorsData: Floor[] = [
         position: [-1.2, 0, 0.8],
         size: [1.5, 0.15, 1.0],
         color: "#F5E6A3",
-        description: "中国特色产业海外展厅，展示各地优势出海产品"
+        description: "中国特色产业海外展厅，展示各地优势出海产品",
+        image: "/images/1-e6-a5-bc-e4-b8-ad-e5-9e-8b-e5-b1-95-e5-8f-b0.jpg"
       },
       {
         id: "1f-multifunction",
@@ -70,7 +73,8 @@ export const floorsData: Floor[] = [
         position: [1.0, 0, 0],
         size: [1.6, 0.15, 2.0],
         color: "#E8D4F0",
-        description: "灵活开放空间，适合活动、发布会及大型展示"
+        description: "灵活开放空间，适合活动、发布会及大型展示",
+        image: "/images/1-e6-a5-bc-e5-b1-95-e5-8f-b0-e5-b8-a6-e6-b4-bd-e8-b0-88-e5-8c-ba.jpg"
       },
       {
         id: "1f-digital",
@@ -83,7 +87,8 @@ export const floorsData: Floor[] = [
         position: [1.0, 0, 1.2],
         size: [1.2, 0.15, 0.8],
         color: "#E8D4F0",
-        description: "融合线下体验与数字化选品功能"
+        description: "融合线下体验与数字化选品功能",
+        image: "/images/1-e6-a5-bc-e4-ba-92-e5-8a-a8-e5-8c-ba-e5-b1-95-e5-8f-b0.jpg"
       }
     ]
   },
@@ -132,7 +137,8 @@ export const floorsData: Floor[] = [
         position: [0.8, 0, 0],
         size: [2.0, 0.15, 2.2],
         color: "#E8C4C4",
-        description: "灵活的开放式布局，适合新兴品牌或同类目品牌进行联合策展"
+        description: "灵活的开放式布局，适合新兴品牌或同类目品牌进行联合策展",
+        image: "/images/2-e6-a5-bc-e8-81-94-e5-90-88-e5-93-81-e7-89-8c-e5-b1-95-e5-8c-ba.jpg"
       }
     ]
   },
@@ -155,7 +161,8 @@ export const floorsData: Floor[] = [
         position: [-1.6, 0, -1.0],
         size: [0.9, 0.15, 0.9],
         color: "#C4D4C0",
-        description: "针对高增长的出海宠物经济，专门设立的场景化展示区"
+        description: "针对高增长的出海宠物经济，专门设立的场景化展示区",
+        image: "/images/3-e6-a5-bc-e7-89-b9-e8-89-b2-e4-ba-a7-e4-b8-9a-e5-b1-95-e5-8c-baa.jpg"
       },
       {
         id: "3f-department",
@@ -168,7 +175,8 @@ export const floorsData: Floor[] = [
         position: [-1.6, 0, 0.2],
         size: [0.9, 0.15, 1.0],
         color: "#C4D4C0",
-        description: "涵盖家居、日用等全品类百货，提供一站式选品体验"
+        description: "涵盖家居、日用等全品类百货，提供一站式选品体验",
+        image: "/images/3-e6-a5-bc-e7-89-b9-e8-89-b2-e4-ba-a7-e4-b8-9a-e5-8c-bac.jpg"
       },
       {
         id: "3f-textile",
@@ -207,7 +215,8 @@ export const floorsData: Floor[] = [
         position: [0.5, 0, 0],
         size: [1.0, 0.15, 1.0],
         color: "#E8C4C4",
-        description: "智能家电与小家电展示区"
+        description: "智能家电与小家电展示区",
+        image: "/images/3-e6-a5-bc-e7-89-b9-e8-89-b2-e4-ba-a7-e4-b8-9a-e5-8c-bab.jpg"
       },
       {
         id: "3f-jewelry",
