@@ -6,7 +6,6 @@ import { OrbitControls, Environment, Html, Stars, Sparkles } from "@react-three/
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { floorsData, type Floor, type Zone, getStatusColor } from "@/lib/floor-data";
-import { activeFilter, isGhostMode } from "@/lib/filter-data"; // Import activeFilter and isGhostMode
 
 interface BuildingProps {
   selectedFloor: number | null;
@@ -419,7 +418,6 @@ function Scene({
             }
             onZoneClick={(zone) => onZoneSelect(zone, floor)}
             selectedZone={selectedZone}
-            activeFilter={activeFilter}
           />
         ))}
       </Suspense>
@@ -460,6 +458,8 @@ export function Building3D({
   onFloorSelect,
   onZoneSelect,
 }: BuildingProps) {
+  const activeFilter = null; // Declare activeFilter here or import it as needed
+
   return (
     <div className="h-full w-full">
       <Canvas
