@@ -33,6 +33,10 @@ import {
   ClockIcon,
   ChevronRightIcon,
   ImageIcon,
+  MegaphoneIcon,
+  UserIcon,
+  CopyIcon,
+  MessageCircleIcon,
 } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -61,6 +65,19 @@ export function BookingPanel({
   });
   const [isBooking, setIsBooking] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [wechatCopied, setWechatCopied] = useState(false);
+  const [appointmentBooked, setAppointmentBooked] = useState(false);
+
+  const handleCopyWechat = async () => {
+    await navigator.clipboard.writeText("EX_VIP_2026");
+    setWechatCopied(true);
+    setTimeout(() => setWechatCopied(false), 2000);
+  };
+
+  const handleBookAppointment = () => {
+    setAppointmentBooked(true);
+    setTimeout(() => setAppointmentBooked(false), 3000);
+  };
 
   const handleBooking = async () => {
     if (!selectedZone || selectedZone.status !== "available") return;
@@ -101,6 +118,23 @@ export function BookingPanel({
 
       <ScrollArea className="flex-1">
         <div className="p-5 space-y-5">
+          {/* Launch Slogan Banner */}
+          <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/20">
+                <MegaphoneIcon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-amber-900 dark:text-amber-200 text-sm">
+                  项目于2026年6月正式开始招商
+                </p>
+                <p className="text-xs text-amber-700 dark:text-amber-400/80 mt-1">
+                  Project starts recruiting in June 2026
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Building Overview Image */}
           {!selectedFloor && (
             <div className="relative aspect-[16/9] rounded-xl overflow-hidden border border-border/50 shadow-lg">
@@ -421,6 +455,72 @@ export function BookingPanel({
               )}
             </>
           )}
+
+          {/* Sales Contact Section */}
+          <Separator className="bg-border/50" />
+          
+          <Card className="bg-primary/5 border-primary/20 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <MessageCircleIcon className="h-4 w-4 text-primary" />
+                专属销售顾问 (Sales Consultant)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 pb-4">
+              {/* Manager Info */}
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 shadow-md">
+                  <UserIcon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">王经理</p>
+                  <p className="text-xs text-muted-foreground">Manager Wang | Senior Sales</p>
+                </div>
+              </div>
+
+              {/* WeChat ID */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">WeChat:</span>
+                  <span className="font-mono font-semibold text-sm text-foreground">EX_VIP_2026</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyWechat}
+                  className="h-8 px-3 text-xs bg-transparent"
+                >
+                  {wechatCopied ? (
+                    <>
+                      <CheckCircleIcon className="h-3.5 w-3.5 mr-1.5 text-green-500" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <CopyIcon className="h-3.5 w-3.5 mr-1.5" />
+                      Copy
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Appointment Button */}
+              {appointmentBooked ? (
+                <div className="flex items-center justify-center gap-2 rounded-xl bg-green-500/10 p-3 text-green-600 border border-green-500/20">
+                  <CheckCircleIcon className="h-4 w-4" />
+                  <span className="text-sm font-medium">Sales will contact you shortly!</span>
+                </div>
+              ) : (
+                <Button
+                  className="w-full rounded-xl"
+                  onClick={handleBookAppointment}
+                >
+                  <MessageCircleIcon className="h-4 w-4 mr-2" />
+                  预约咨询 (Book Appointment)
+                </Button>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </ScrollArea>
 

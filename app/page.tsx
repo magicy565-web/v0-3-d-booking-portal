@@ -4,6 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { BookingPanel } from "@/components/exhibition/booking-panel";
 import { FloorSelector } from "@/components/exhibition/floor-selector";
+import { FilterBar } from "@/components/exhibition/filter-bar";
 import { floorsData, type Floor, type Zone } from "@/lib/floor-data";
 import { Button } from "@/components/ui/button";
 import { MenuIcon, XIcon, InfoIcon } from "lucide-react";
@@ -32,6 +33,7 @@ export default function ExhibitionBookingPage() {
   const [selectedFloorData, setSelectedFloorData] = useState<Floor | null>(null);
   const [showPanel, setShowPanel] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("All");
 
   const handleFloorSelect = (floorId: number | null) => {
     setSelectedFloor(floorId);
@@ -51,7 +53,7 @@ export default function ExhibitionBookingPage() {
   };
 
   return (
-    <main className="relative h-screen w-full overflow-hidden bg-background">
+    <main className="relative h-[100dvh] w-full overflow-hidden bg-background">
       {/* Header */}
       <header className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-4 py-3 md:px-6">
         <div className="flex items-center gap-3">
@@ -146,8 +148,15 @@ export default function ExhibitionBookingPage() {
           selectedZone={selectedZone}
           onFloorSelect={handleFloorSelect}
           onZoneSelect={handleZoneSelect}
+          activeFilter={activeFilter}
         />
       </div>
+
+      {/* Filter Bar */}
+      <FilterBar
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+      />
 
       {/* Floor Selector */}
       <FloorSelector
